@@ -1,0 +1,65 @@
+using System;
+using System.Threading;
+
+class AnimalThread
+{
+    private string animalName;
+    private int distanceTravelled = 0;
+    public Thread Thread { get; private set; }
+
+    public AnimalThread(string name, ThreadPriority priority)
+    {
+        animalName = name;
+        Thread = new Thread(Run);
+        Thread.Priority = priority;
+    }
+
+    public void Run()
+    {
+        while (distanceTravelled < 100)
+        {
+            distanceTravelled++;
+            Console.WriteLine($"{animalName} пробежал {distanceTravelled} метров");
+            Thread.Sleep(100); 
+        }
+        Console.WriteLine($"{animalName} достиг финиша!");
+    }
+}
+
+class RabbitAndTurtle
+{
+    public static void Main()
+    {
+        AnimalThread rabbit = new AnimalThread("Кролик", ThreadPriority.Normal);
+        AnimalThread turtle = new AnimalThread("Черепаха", ThreadPriority.BelowNormal);
+
+        rabbit.Thread.Start();
+        turtle.Thread.Start();
+
+        while (rabbit.Thread.IsAlive || turtle.Thread.IsAlive)
+        {
+            Thread.Sleep(500);
+
+            // Динамически меняем приоритеты, чтобы отстающий догонял
+            if (rabbit.Thread.IsAlive && turtle.Thread.IsAlive) // Оба потока ещё работают
+            {
+                if (rabbit.Thread.Priority == ThreadPriority.Lowest)
+                {
+                    rabbit.Thread.Priority = ThreadPriority.AboveNormal;
+                    turtle.Thread.Priority = ThreadPriority.Lowest;
+                }
+                else
+                {
+                    rabbit.Thread.Priority = ThreadPriority.Lowest;
+                    turtle.Thread.Priority = ThreadPriority.AboveNormal;
+                }
+            }
+        }
+
+        rabbit.Thread.Join();
+        turtle.Thread.Join();
+
+        Console.WriteLine("Гонка завершена!");
+    }
+}
+
